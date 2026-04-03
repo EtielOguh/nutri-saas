@@ -39,9 +39,11 @@ def db_session():
 @pytest.fixture
 def nutricionista(db_session: Session) -> Nutricionista:
     """Cria um nutricionista para testes."""
+    # Usar UUID para garantir email único em cada teste
+    unique_id = str(uuid.uuid4())[:8]
     nutricionista = Nutricionista(
         nome="Dr. Silva",
-        email="silva@example.com",
+        email=f"silva_{unique_id}@example.com",
         senha_hash="hashed_password_123",
     )
     db_session.add(nutricionista)
@@ -363,9 +365,14 @@ class TestTokenDataset:
         
         db_session.commit()
         
-        # Verificar que todos os tokens foram criados
-        total_tokens = db_session.query(TokenAcessoCliente).count()
-        assert total_tokens == 16
+        # Verificar que todos os tokens foram criados para este nutricionista
+        total_tokens_nutricionista = (
+            db_session.query(TokenAcessoCliente)
+            .join(Cliente)
+            .filter(Cliente.nutricionista_id == nutricionista.id)
+            .count()
+        )
+        assert total_tokens_nutricionista == 16
         
         # Verificar que cada token retorna o cliente correto
         service = ClienteService(db=db_session)

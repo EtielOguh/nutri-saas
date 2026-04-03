@@ -74,3 +74,48 @@ class NutricionistaSimpleResponse(BaseSchema):
     id: int
     nome: str
     email: str
+
+
+class LogoUploadResponse(BaseSchema):
+    """Schema de resposta para upload de logo."""
+
+    nutricionista_id: int = Field(..., description="ID do nutricionista")
+    logo_url: str = Field(..., description="URL da logo armazenada")
+    logo_path: str = Field(..., description="Caminho relativo do arquivo")
+    file_size: int = Field(..., ge=0, description="Tamanho do arquivo em bytes")
+    message: str = Field(..., description="Mensagem de sucesso")
+
+
+class DashboardClienteInfo(BaseSchema):
+    """Informações básicas de um cliente para o dashboard."""
+
+    id: int = Field(..., description="ID do cliente")
+    nome: str = Field(..., description="Nome do cliente")
+    idade: Optional[int] = Field(None, description="Idade do cliente")
+    objetivo: Optional[str] = Field(None, description="Objetivo do cliente")
+    ultima_medicao: Optional[float] = Field(None, description="Peso da última medição em kg")
+    data_ultima_medicao: Optional[datetime] = Field(None, description="Data da última medição")
+
+
+class DashboardMetricas(BaseSchema):
+    """Métricas agregadas do dashboard."""
+
+    total_clientes: int = Field(..., ge=0, description="Total de clientes do nutricionista")
+    total_medicoes: int = Field(..., ge=0, description="Total de medições registradas")
+    media_peso: Optional[float] = Field(None, description="Média de peso de todos os clientes em kg")
+    num_clientes_ativos: int = Field(..., ge=0, description="Clientes com medições no último mês")
+
+
+class DashboardNutricionistaResponse(BaseSchema):
+    """Resposta completa do dashboard do nutricionista."""
+
+    nutricionista_id: int = Field(..., description="ID do nutricionista")
+    nome: str = Field(..., description="Nome do nutricionista")
+    email: str = Field(..., description="Email do nutricionista")
+    metricas: DashboardMetricas = Field(..., description="Métricas agregadas")
+    clientes_recentes: List[DashboardClienteInfo] = Field(
+        ..., description="Últimos 5 clientes com atividade recente"
+    )
+    configuracao: Optional[ConfiguracaoNutricionistaResponse] = Field(
+        None, description="Configurações do nutricionista"
+    )

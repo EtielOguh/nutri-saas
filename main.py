@@ -1,10 +1,12 @@
 """Arquivo principal - Inicialização da aplicação FastAPI."""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 from core.config import settings
 from core.database import engine, init_db, close_db
-from api.routes import health, cliente, tmb, public
+from api.routes import health, cliente, tmb, public, nutricionista, pdf
 
 # Inicialização da aplicação
 app = FastAPI(
@@ -30,6 +32,13 @@ app.include_router(health.router)
 app.include_router(public.router)
 app.include_router(tmb.router)
 app.include_router(cliente.router)
+app.include_router(nutricionista.router)
+app.include_router(pdf.router)
+
+# Servir arquivos estáticos (uploads)
+uploads_dir = Path("uploads")
+if uploads_dir.exists():
+    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
 # Eventos de inicialização
