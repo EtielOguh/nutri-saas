@@ -118,7 +118,7 @@ export const ClientDetailPage = () => {
           ← Voltar
         </button>
         <div>
-          <h1>{client.name}</h1>
+          <h1>{client.nome}</h1>
           <p className="client-meta">
             Adicionado em {new Date(client.created_at).toLocaleDateString('pt-BR')}
           </p>
@@ -145,7 +145,7 @@ export const ClientDetailPage = () => {
           </div>
           <div className="info-card">
             <label>Idade</label>
-            <p>{client.age || '-'}</p>
+            <p>{client.idade || '-'}</p>
           </div>
           <div className="info-card">
             <label>Gênero</label>
@@ -157,7 +157,7 @@ export const ClientDetailPage = () => {
           </div>
           <div className="info-card">
             <label>Altura</label>
-            <p>{client.height ? `${client.height} m` : '-'}</p>
+            <p>{client.altura ? `${client.altura} m` : '-'}</p>
           </div>
         </div>
 

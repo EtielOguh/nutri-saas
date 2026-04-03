@@ -8,23 +8,48 @@
 
 ---
 
-## ⚡ Quick Start (Forma Rápida)
+## ⚡ Quick Start (Forma Rápida) - Usando VS Code
 
-### Terminal 1 - Backend
+### ⚙️ Setup Inicial (só uma vez)
+
+No VS Code, abra o Terminal: `Ctrl + ~` (ou **Terminal > New Terminal**)
+
 ```bash
-cd /Users/hugo/Desktop/nutri\ saas
+# 1. Entre na pasta frontend
+cd frontend
+
+# 2. Instale dependências do npm (só na primeira vez)
+npm install
+```
+
+### 🚀 Rodar o Projeto - 2 Terminais
+
+**Terminal 1 - Backend:**
+
+No terminal que está aberto, execute:
+```bash
 source .venv/bin/activate
 python main.py
 ```
 
-### Terminal 2 - Frontend
+Quando ver `✅ Iniciando Nutri SaaS API` = ✅ Backend OK
+
+---
+
+**Terminal 2 - Frontend:**
+
+Abra **novo terminal** no VS Code:
+- Clique no `+` ao lado da aba do terminal (ou `Ctrl + Shift + ~`)
+- Execute:
+
 ```bash
-cd /Users/hugo/Desktop/nutri\ saas/frontend
-npm install  # Apenas primeira vez
+cd frontend
 npm run dev
 ```
 
-### Abra seu navegador
+Quando ver `➜ Local: http://localhost:3000/` = ✅ Frontend OK
+
+### 💻 Acesse no Navegador
 ```
 http://localhost:3000
 ```
@@ -33,77 +58,7 @@ Pronto! ✅
 
 ---
 
-## 📖 Guia Detalhado
-
-### Passo 1: Ativar Backend
-
-**1.1 - Abra um terminal nova e navegue até a pasta do projeto:**
-```bash
-cd /Users/hugo/Desktop/nutri\ saas
-```
-
-**1.2 - Ative o ambiente virtual Python:**
-```bash
-source .venv/bin/activate
-```
-
-Você verá `(.venv)` aparecer no terminal.
-
-**1.3 - Inicie o servidor:**
-```bash
-python main.py
-```
-
-Você verá algo como:
-```
-✅ Iniciando Nutri SaaS! (v1.0.0)
-📊 Banco de dados: database.db
-🏠 Servidor: http://0.0.0.0:8000
-📚 API Docs: http://0.0.0.0:8000/api/docs
-```
-
-✅ Backend rodando em `http://localhost:8000`
-
----
-
-### Passo 2: Ativar Frontend
-
-**2.1 - Abra outro terminal E navegue até a pasta frontend:**
-```bash
-cd /Users/hugo/Desktop/nutri\ saas/frontend
-```
-
-**2.2 - Instale as dependências (apenas na primeira vez):**
-```bash
-npm install
-```
-
-Aguarde o npm baixar e instalar todos os pacotes.
-
-**2.3 - Inicie o servidor de desenvolvimento:**
-```bash
-npm run dev
-```
-
-Você verá:
-```
-  VITE v4.x.x  ready in XXX ms
-
-  ➜  Local:   http://localhost:3000/
-  ➜  press h to show help
-```
-
-✅ Frontend rodando em `http://localhost:3000`
-
----
-
-### Passo 3: Abra o Navegador
-
-Vá até: **`http://localhost:3000`**
-
----
-
-## 🔐 Fazer Login
+## � Fazer Login
 
 ### Credenciais de Teste
 
@@ -112,11 +67,9 @@ Email: teste@nutricionista.com
 Senha: senha123456
 ```
 
-![login-screen]
-
-1. **Email**: Digite `teste@nutricionista.com`
-2. **Senha**: Digite `senha123456`
-3. **Clique em "Entrar"**
+1. Digite o **Email** e **Senha**
+2. Clique em **"Entrar"**
+3. Você verá o **Dashboard** com a lista de clientes
 
 ---
 
@@ -147,20 +100,23 @@ Após login, você verá:
 
 ## 🐛 Troubleshooting
 
-### Erro: "Address already in use" (porta 8000)
+### ❌ Erro: "Address already in use" (porta 8000)
 
-**Solução**: Matou o servidor anterior? Tente:
+Significa que há um processo antigo rodando na porta 8000.
+
+**Solução rápida:**
 ```bash
-# Encontre qual processo está usando a porta 8000
-lsof -i :8000
+# Matar processo na porta 8000
+lsof -ti :8000 | xargs kill -9
 
-# Ou simplesmente use outra porta:
-python main.py --port 8001
+# Depois rodar novamente
+source .venv/bin/activate
+python main.py
 ```
 
-### Erro: "Cannot find module" no npm
+### ❌ Erro: "Cannot find module" no npm
 
-**Solução**: Reinstale as dependências:
+**Solução**: 
 ```bash
 cd frontend
 rm -rf node_modules package-lock.json
@@ -168,25 +124,9 @@ npm install
 npm run dev
 ```
 
-### Backend retorna erro 404
+### ❌ Backend retorna erro 404
 
-**Solução**: Certifique-se que:
-1. Backend está rodando em `http://localhost:8000`
-2. Banco de dados existe em `/Users/hugo/Desktop/nutri saas/database.db`
-
-Verifique:
-```bash
-ls -la /Users/hugo/Desktop/nutri\ saas/database.db
-```
-
-### Dados de teste não existem
-
-**Solução**: Execute:
-```bash
-cd /Users/hugo/Desktop/nutri\ saas
-source .venv/bin/activate
-python setup_test_data.py
-```
+Certifique-se que backend está rodando com `python main.py`
 
 ---
 

@@ -13,10 +13,29 @@ export const nutricionistaService = {
   },
 
   /**
+   * Obter configurações do nutricionista
+   */
+  getConfig: async (nutricionistaId) => {
+    const response = await api.get(`/nutricionistas/${nutricionistaId}/configuracao`)
+    return response.data
+  },
+
+  /**
    * Obter dashboard do nutricionista
    */
   getDashboard: async (nutricionistaId) => {
     const response = await api.get(`/nutricionistas/${nutricionistaId}/dashboard`)
+    return response.data
+  },
+
+  /**
+   * Atualizar dados do nutricionista (nome, CRN)
+   */
+  updateNutricionista: async (nutricionistaId, data) => {
+    const response = await api.put(
+      `/nutricionistas/${nutricionistaId}`,
+      data
+    )
     return response.data
   },
 

@@ -1,11 +1,14 @@
 """Rotas de Nutricionista."""
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from pathlib import Path
 
 from core.database import get_db
-from models.nutricionista import Nutricionista
+from core.dependencies import get_current_user
+from models.nutricionista import Nutricionista, ConfiguracaoNutricionista
+from models.nutricionista import Nutricionista as NutricionistaModel
 from schemas.nutricionista import (
     ConfiguracaoNutricionistaResponse,
     ConfiguracaoNutricionistaUpdate,
@@ -37,6 +40,7 @@ router = APIRouter(
 async def get_nutricionista(
     nutricionista_id: int,
     db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
 ) -> NutricionistaResponse:
     """
     Obtém informações de um nutricionista.
@@ -44,7 +48,15 @@ async def get_nutricionista(
     - **nutricionista_id**: ID do nutricionista
     
     Retorna informações do nutricionista com suas configurações.
+    Requer autenticação via Bearer token.
     """
+    # Verifica se o usuário está tentando acessar seus próprios dados
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para acessar dados de outro nutricionista",
+        )
+    
     service = NutricionistaService(db=db)
     nutricionista = service.get_by_id(nutricionista_id)
 
@@ -53,6 +65,63 @@ async def get_nutricionista(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Nutricionista com ID {nutricionista_id} não encontrado",
         )
+
+    return NutricionistaResponse.model_validate(nutricionista)
+
+
+@router.put(
+    "/{nutricionista_id}",
+    response_model=NutricionistaResponse,
+    summary="Atualizar nutricionista",
+    description="Atualiza informações de um nutricionista (nome, CRN).",
+)
+async def update_nutricionista(
+    nutricionista_id: int,
+    nutricionista_data: dict,
+    db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
+) -> NutricionistaResponse:
+    """
+    Atualiza informações de um nutricionista.
+    
+    - **nutricionista_id**: ID do nutricionista
+    - **Body**: JSON com nome ou crn (campos opcionais)
+    
+    Exemplo:
+    ```json
+    {
+      "nome": "Dr. João Silva",
+      "crn": "123456/SP"
+    }
+    ```
+    
+    Requer autenticação via Bearer token.
+    """
+    # Verifica permissão
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para atualizar dados de outro nutricionista",
+        )
+    
+    service = NutricionistaService(db=db)
+    nutricionista = service.get_by_id(nutricionista_id)
+
+    if not nutricionista:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Nutricionista com ID {nutricionista_id} não encontrado",
+        )
+
+    # Atualizar campos fornecidos
+    if "nome" in nutricionista_data and nutricionista_data["nome"]:
+        nutricionista.nome = nutricionista_data["nome"]
+    
+    if "crn" in nutricionista_data:
+        nutricionista.crn = nutricionista_data["crn"]
+    
+    db.commit()
+    db.refresh(nutricionista)
 
     return NutricionistaResponse.model_validate(nutricionista)
 
@@ -66,6 +135,7 @@ async def get_nutricionista(
 async def get_configuracao(
     nutricionista_id: int,
     db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
 ) -> ConfiguracaoNutricionistaResponse:
     """
     Obtém configurações de um nutricionista.
@@ -73,15 +143,39 @@ async def get_configuracao(
     - **nutricionista_id**: ID do nutricionista
     
     Retorna configurações como logo, cor primária, valor de consulta.
+    Requer autenticação via Bearer token.
     """
+    # Verifica se o usuário está tentando acessar seus próprios dados
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para acessar configurações de outro nutricionista",
+        )
+    
     service = NutricionistaService(db=db)
     config = service.get_configuracao(nutricionista_id)
 
+    # Se não existir configuração, retorna uma com valores padrão (sem persistir)
     if not config:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Configurações não encontradas para nutricionista {nutricionista_id}",
-        )
+        # Verifica que nutricionista existe
+        nutricionista = service.get_by_id(nutricionista_id)
+        if not nutricionista:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Nutricionista {nutricionista_id} não encontrado",
+            )
+        
+        # Retorna configuração padrão sem salvar no banco
+        config_data = {
+            "id": nutricionista_id,
+            "nutricionista_id": nutricionista_id,
+            "logo_url": None,
+            "valor_consulta": None,
+            "link_agendamento": None,
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        return ConfiguracaoNutricionistaResponse(**config_data)
 
     return ConfiguracaoNutricionistaResponse.model_validate(config)
 
@@ -96,6 +190,7 @@ async def update_configuracao(
     nutricionista_id: int,
     config_data: ConfiguracaoNutricionistaUpdate,
     db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
 ) -> ConfiguracaoNutricionistaResponse:
     """
     Atualiza configurações de um nutricionista.
@@ -104,7 +199,15 @@ async def update_configuracao(
     - **config_data**: Dados a atualizar (logo_url, cor_primaria, valor_consulta, link_agendamento)
     
     Qualquer campo não fornecido não será alterado.
+    Requer autenticação via Bearer token.
     """
+    # Verifica se o usuário está tentando atualizar suas próprias configurações
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para atualizar configurações de outro nutricionista",
+        )
+    
     service = NutricionistaService(db=db)
 
     try:
@@ -128,6 +231,7 @@ async def upload_logo(
     nutricionista_id: int,
     file: UploadFile = File(..., description="Arquivo de imagem (JPG, PNG, WebP, GIF)"),
     db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
 ) -> LogoUploadResponse:
     """
     Faz upload de uma logo para um nutricionista.
@@ -138,7 +242,15 @@ async def upload_logo(
     Aceita os seguintes formatos: JPG, PNG, WebP, GIF
     
     A logo anterior será substituída automaticamente.
+    Requer autenticação via Bearer token.
     """
+    # Verifica se o usuário está tentando fazer upload para sua própria logo
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para fazer upload de logo de outro nutricionista",
+        )
+    
     service = NutricionistaService(db=db)
 
     try:
@@ -171,6 +283,7 @@ async def upload_logo(
 async def delete_logo(
     nutricionista_id: int,
     db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
 ):
     """
     Remove a logo de um nutricionista.
@@ -178,7 +291,15 @@ async def delete_logo(
     - **nutricionista_id**: ID do nutricionista
     
     Retorna uma mensagem confirmando a remoção.
+    Requer autenticação via Bearer token.
     """
+    # Verifica se o usuário está tentando deletar logo de outro nutricionista
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para deletar logo de outro nutricionista",
+        )
+    
     service = NutricionistaService(db=db)
 
     deleted = service.delete_logo(nutricionista_id)
@@ -204,6 +325,7 @@ async def delete_logo(
 async def get_dashboard(
     nutricionista_id: int,
     db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
 ) -> DashboardNutricionistaResponse:
     """
     Obtém dados completos do dashboard para um nutricionista.
@@ -220,7 +342,16 @@ async def get_dashboard(
     
     Returns:
         Objeto com métricas, clientes recentes e configurações
+    
+    Requer autenticação via Bearer token.
     """
+    # Verifica se o usuário está tentando acessar dashboard de outro nutricionista
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para acessar dashboard de outro nutricionista",
+        )
+    
     service = NutricionistaService(db=db)
 
     try:

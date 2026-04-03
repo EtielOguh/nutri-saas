@@ -10,8 +10,7 @@ class ConfiguracaoNutricionistaBase(BaseSchema):
     """Schema base para Configuração."""
 
     logo_url: Optional[str] = Field(None, max_length=512, description="URL da logo")
-    cor_primaria: str = Field(default="#0066CC", pattern="^#[0-9A-Fa-f]{6}$", description="Cor em formato hex")
-    valor_consulta: float = Field(..., gt=0, description="Valor da consulta em R$")
+    valor_consulta: Optional[float] = Field(None, gt=0, description="Valor da consulta em R$")
     link_agendamento: Optional[str] = Field(None, max_length=512, description="Link para agendamento")
 
 
@@ -24,7 +23,6 @@ class ConfiguracaoNutricionistaUpdate(BaseSchema):
     """Schema para atualizar configuração."""
 
     logo_url: Optional[str] = Field(None, max_length=512)
-    cor_primaria: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
     valor_consulta: Optional[float] = Field(None, gt=0)
     link_agendamento: Optional[str] = Field(None, max_length=512)
 
@@ -40,6 +38,7 @@ class NutricionistaBase(BaseSchema):
 
     nome: str = Field(..., min_length=3, max_length=255, description="Nome do nutricionista")
     email: EmailStr = Field(..., description="Email único do nutricionista")
+    crn: Optional[str] = Field(None, max_length=50, description="CRN do nutricionista")
 
 
 class NutricionistaCreate(NutricionistaBase):

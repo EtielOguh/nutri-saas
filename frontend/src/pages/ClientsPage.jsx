@@ -32,8 +32,11 @@ export const ClientsPage = () => {
       setError(null)
 
       const response = await clientService.listClients(user.id, page, pageSize)
-      setClients(response.items || [])
-      setTotalPages(response.total_pages || 1)
+      // Response is a List[], not a paginated object
+      setClients(response || [])
+      // Calculate total pages locally
+      const totalPages = response ? Math.ceil(response.length / pageSize) : 1
+      setTotalPages(totalPages)
     } catch (err) {
       console.error('Erro ao carregar clientes:', err)
       setError('Falha ao carregar clientes. Tente novamente.')
@@ -62,7 +65,7 @@ export const ClientsPage = () => {
   }
 
   const filteredClients = clients.filter((client) =>
-    client.name.toLowerCase().includes(search.toLowerCase()) ||
+    client.nome.toLowerCase().includes(search.toLowerCase()) ||
     (client.email && client.email.toLowerCase().includes(search.toLowerCase()))
   )
 
@@ -121,10 +124,10 @@ export const ClientsPage = () => {
               <tbody>
                 {filteredClients.map((client) => (
                   <tr key={client.id}>
-                    <td className="cell-name">{client.name}</td>
+                    <td className="cell-name">{client.nome}</td>
                     <td>{client.email || '-'}</td>
                     <td>{client.phone || '-'}</td>
-                    <td>{client.age || '-'}</td>
+                    <td>{client.idade || '-'}</td>
                     <td>
                       {new Date(client.created_at).toLocaleDateString('pt-BR')}
                     </td>

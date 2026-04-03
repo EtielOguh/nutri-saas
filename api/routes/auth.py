@@ -60,6 +60,7 @@ async def login(
         id=nutricionista.id,
         nome=nutricionista.nome,
         email=nutricionista.email,
+        crn=nutricionista.crn,
         token=token,
     )
 

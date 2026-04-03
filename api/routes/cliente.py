@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 import uuid
 
 from core.database import get_db
+from core.dependencies import get_current_user
 from models.cliente import Cliente
+from models.nutricionista import Nutricionista
 from models.token_acesso import TokenAcessoCliente
 from schemas.cliente import ClienteCreate, ClienteResponse, ClienteUpdate, ClienteDetailResponse
 from schemas.token_acesso import TokenAcessoClienteGenerateResponse
@@ -34,6 +36,7 @@ async def criar_cliente(
     nutricionista_id: int,
     cliente_data: ClienteCreate,
     db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
 ) -> ClienteResponse:
     """
     Cria um novo cliente para um nutricionista.
@@ -42,7 +45,15 @@ async def criar_cliente(
     - **cliente_data**: Dados do cliente (nome, idade, altura, objetivo)
     
     Retorna o cliente criado com ID e timestamps.
+    Requer autenticação via Bearer token.
     """
+    # Verifica se o usuário está tentando criar cliente para outro nutricionista
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para criar clientes para outro nutricionista",
+        )
+    
     try:
         service = ClienteService(db=db)
         
@@ -79,6 +90,7 @@ async def listar_clientes(
     skip: int = Query(0, ge=0, description="Número de registros a pular"),
     limit: int = Query(10, ge=1, le=100, description="Número máximo de registros"),
     db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
 ) -> List[ClienteResponse]:
     """
     Lista todos os clientes de um nutricionista.
@@ -88,7 +100,15 @@ async def listar_clientes(
     - **limit**: Número máximo de registros a retornar (padrão: 10, máximo: 100)
     
     Retorna lista de clientes com paginação.
+    Requer autenticação via Bearer token.
     """
+    # Verifica se o usuário está tentando listar clientes de outro nutricionista
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para listar clientes de outro nutricionista",
+        )
+    
     try:
         service = ClienteService(db=db)
         clientes = service.get_by_nutricionista(nutricionista_id, skip=skip, limit=limit)
@@ -111,6 +131,7 @@ async def obter_cliente(
     nutricionista_id: int,
     cliente_id: int,
     db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
 ) -> ClienteDetailResponse:
     """
     Obtém detalhes completos de um cliente.
@@ -119,7 +140,15 @@ async def obter_cliente(
     - **cliente_id**: ID do cliente
     
     Retorna cliente com estatísticas (total de medições, observações, etc).
+    Requer autenticação via Bearer token.
     """
+    # Verifica se o usuário está tentando acessar clientes de outro nutricionista
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para acessar clientes de outro nutricionista",
+        )
+    
     try:
         service = ClienteService(db=db)
         
@@ -167,6 +196,7 @@ async def atualizar_cliente(
     cliente_id: int,
     cliente_data: ClienteUpdate,
     db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
 ) -> ClienteResponse:
     """
     Atualiza um cliente existente.
@@ -176,7 +206,15 @@ async def atualizar_cliente(
     - **cliente_data**: Dados a atualizar (todos opcionais)
     
     Apenas campos fornecidos serão atualizados.
+    Requer autenticação via Bearer token.
     """
+    # Verifica se o usuário está tentando alterar clientes de outro nutricionista
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para alterar clientes de outro nutricionista",
+        )
+    
     try:
         service = ClienteService(db=db)
         
@@ -216,6 +254,7 @@ async def deletar_cliente(
     nutricionista_id: int,
     cliente_id: int,
     db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
 ) -> None:
     """
     Deleta um cliente.
@@ -225,7 +264,15 @@ async def deletar_cliente(
     
     Retorna 204 No Content se sucesso.
     Retorna 404 se cliente não encontrado.
+    Requer autenticação via Bearer token.
     """
+    # Verifica se o usuário está tentando deletar clientes de outro nutricionista
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para deletar clientes de outro nutricionista",
+        )
+    
     try:
         service = ClienteService(db=db)
         
@@ -264,6 +311,7 @@ async def gerar_token_cliente(
     nutricionista_id: int,
     cliente_id: int,
     db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
 ) -> TokenAcessoClienteGenerateResponse:
     """
     Gera um novo token de acesso público para um cliente.
@@ -274,28 +322,15 @@ async def gerar_token_cliente(
     - **nutricionista_id**: ID do nutricionista proprietário
     - **cliente_id**: ID do cliente
     
-    **Resposta (201):**
-    - token_unico: Token gerado (UUID v4)
-    - cliente_id: ID do cliente
-    - mensagem: Mensagem de sucesso
-    
-    **Endpoint público de acesso:**
-    ```
-    GET /public/cliente/{token_unico}
-    ```
-    
-    **Exemplo:**
-    ```bash
-    curl -X POST "http://localhost:8000/nutricionistas/1/clientes/5/gerar-token-acesso"
-    
-    Response:
-    {
-        "token_unico": "550e8400-e29b-41d4-a716-446655440000",
-        "cliente_id": 5,
-        "mensagem": "Token gerado com sucesso"
-    }
-    ```
+    Requer autenticação via Bearer token.
     """
+    # Verifica se o usuário está tentando gerar token para clientes de outro nutricionista
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para gerar tokens para clientes de outro nutricionista",
+        )
+    
     try:
         service = ClienteService(db=db)
         
@@ -355,20 +390,20 @@ async def obter_token_cliente(
     nutricionista_id: int,
     cliente_id: int,
     db: Session = Depends(get_db),
+    current_user: Nutricionista = Depends(get_current_user),
 ) -> TokenAcessoClienteGenerateResponse:
     """
     Obtém o token de acesso público de um cliente.
     
-    Se o cliente não tiver um token gerado ainda, returna erro 404.
-    
-    - **nutricionista_id**: ID do nutricionista proprietário
-    - **cliente_id**: ID do cliente
-    
-    **Resposta (200):**
-    - token_unico: Token do cliente
-    - cliente_id: ID do cliente
-    - mensagem: Mensagem informativa
+    Requer autenticação via Bearer token.
     """
+    # Verifica se o usuário está tentando acessar token de clientes de outro nutricionista
+    if current_user.id != nutricionista_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para acessar tokens de clientes de outro nutricionista",
+        )
+    
     try:
         service = ClienteService(db=db)
         

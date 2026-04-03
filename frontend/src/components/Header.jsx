@@ -27,7 +27,6 @@ export const Header = () => {
           <nav className="header-nav">
             <Link to="/dashboard" className="nav-link">Dashboard</Link>
             <Link to="/clientes" className="nav-link">Clientes</Link>
-            <Link to="/settings" className="nav-link">Configurações</Link>
           </nav>
         )}
 

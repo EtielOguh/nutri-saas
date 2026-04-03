@@ -19,7 +19,8 @@ export const authService = {
         id: response.data.id,
         nome: response.data.nome,
         email: response.data.email,
-        name: response.data.nome // Compatibilidade
+        name: response.data.nome, // Compatibilidade
+        crn: response.data.crn || null
       }))
     }
     

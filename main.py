@@ -6,7 +6,7 @@ from pathlib import Path
 
 from core.config import settings
 from core.database import engine, init_db, close_db
-from api.routes import health, cliente, tmb, public, nutricionista, pdf, auth
+from api.routes import health, cliente, cliente_direto, tmb, public, nutricionista, pdf, auth
 
 # Inicialização da aplicação
 app = FastAPI(
@@ -33,6 +33,7 @@ app.include_router(auth.router)
 app.include_router(public.router)
 app.include_router(tmb.router)
 app.include_router(cliente.router)
+app.include_router(cliente_direto.router_cliente_direto)
 app.include_router(nutricionista.router)
 app.include_router(pdf.router)
 

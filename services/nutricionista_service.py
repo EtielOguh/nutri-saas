@@ -209,11 +209,12 @@ class NutricionistaService(BaseService[Nutricionista, NutricionistaCreate]):
         ).first()
 
         if not config:
-            # Criar configuração padrão se não existir
+            # Verificar que nutricionista existe
             nutricionista = self.get_by_id(nutricionista_id)
             if not nutricionista:
                 raise ValueError(f"Nutricionista com ID {nutricionista_id} não encontrado")
 
+            # Criar com valores padrão (valor_consulta será 0.0 por padrão)
             config = ConfiguracaoNutricionista(nutricionista_id=nutricionista_id)
             self.db.add(config)
 

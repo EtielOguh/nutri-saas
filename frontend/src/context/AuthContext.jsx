@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
     setError(null)
     try {
       const data = await authService.login(email, senha)
-      setUser(data.nutricionista)
+      setUser(data)
       return data
     } catch (err) {
       const message = err.response?.data?.detail || 'Erro ao fazer login'

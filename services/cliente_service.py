@@ -73,8 +73,11 @@ class ClienteService(BaseService[Cliente, ClienteCreate]):
         if cliente_data.nutricionista_id != nutricionista_id:
             raise ValueError("Cliente deve estar vinculado ao nutricionista correto")
         
+        # Usar get_validated_data para normalizar campos en/pt-BR
+        validated_data = cliente_data.get_validated_data()
+        
         # Converter schema para dicionário e criar cliente
-        db_cliente = self.model(**cliente_data.model_dump())
+        db_cliente = self.model(**validated_data)
         self.db.add(db_cliente)
         self.db.commit()
         self.db.refresh(db_cliente)
@@ -97,7 +100,33 @@ class ClienteService(BaseService[Cliente, ClienteCreate]):
         
         # Atualizar apenas campos fornecidos
         update_data = cliente_data.model_dump(exclude_unset=True)
+        
+        # Normalizar nomes de campos en/pt-BR
+        normalized_data = {}
         for field, value in update_data.items():
+            if value is not None:  # Ignorar None
+                if field == 'name' or field == 'nome':
+                    if cliente_data.nome is not None:
+                        normalized_data['nome'] = cliente_data.nome
+                    elif cliente_data.name is not None:
+                        normalized_data['nome'] = cliente_data.name
+                elif field == 'age' or field == 'idade':
+                    if cliente_data.idade is not None:
+                        normalized_data['idade'] = cliente_data.idade
+                    elif cliente_data.age is not None:
+                        normalized_data['idade'] = cliente_data.age
+                elif field == 'height' or field == 'altura':
+                    if cliente_data.altura is not None:
+                        normalized_data['altura'] = cliente_data.altura
+                    elif cliente_data.height is not None:
+                        normalized_data['altura'] = cliente_data.height
+                elif field == 'objective' or field == 'objetivo':
+                    if cliente_data.objetivo is not None:
+                        normalized_data['objetivo'] = cliente_data.objetivo
+                    elif cliente_data.objective is not None:
+                        normalized_data['objetivo'] = cliente_data.objective
+        
+        for field, value in normalized_data.items():
             setattr(db_cliente, field, value)
         
         self.db.add(db_cliente)

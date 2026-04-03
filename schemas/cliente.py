@@ -1,6 +1,6 @@
 """Schemas para Cliente."""
 from typing import Optional, List
-from pydantic import Field
+from pydantic import Field, field_validator
 from datetime import datetime
 
 from schemas.base import BaseSchema, TimestampSchema
@@ -12,23 +12,102 @@ class ClienteBase(BaseSchema):
 
     nutricionista_id: int = Field(..., gt=0, description="ID do nutricionista")
     nome: str = Field(..., min_length=3, max_length=255, description="Nome do cliente")
+    email: Optional[str] = Field(None, max_length=255, description="Email do cliente")
+    phone: Optional[str] = Field(None, max_length=20, description="Telefone do cliente")
     idade: Optional[int] = Field(None, ge=1, le=150, description="Idade em anos")
     altura: Optional[float] = Field(None, gt=0, le=300, description="Altura em cm")
+    gender: Optional[str] = Field(None, max_length=20, description="Gênero")
+    initial_weight: Optional[float] = Field(None, gt=0, description="Peso inicial em kg")
     objetivo: Optional[str] = Field(None, max_length=255, description="Objetivo de saúde")
+    notes: Optional[str] = Field(None, description="Notas adicionais")
 
 
-class ClienteCreate(ClienteBase):
-    """Schema para criar Cliente."""
-    pass
+class ClienteCreate(BaseSchema):
+    """Schema para criar Cliente - aceita tanto en quanto pt-BR."""
+    
+    nutricionista_id: int = Field(..., gt=0, description="ID do nutricionista")
+    # Aceita ambos os nomes (português e inglês)
+    nome: Optional[str] = Field(None, min_length=3, max_length=255)
+    name: Optional[str] = Field(None, min_length=3, max_length=255)
+    
+    idade: Optional[int] = Field(None, ge=1, le=150)
+    age: Optional[int] = Field(None, ge=1, le=150)
+    
+    altura: Optional[float] = Field(None, gt=0, le=300)
+    height: Optional[float] = Field(None, gt=0, le=300)
+    
+    objetivo: Optional[str] = Field(None, max_length=255)
+    objective: Optional[str] = Field(None, max_length=255)
+    
+    # Campos adicionais que podem vir do frontend
+    email: Optional[str] = Field(None, max_length=255)
+    phone: Optional[str] = Field(None, max_length=20)
+    gender: Optional[str] = Field(None, max_length=20)
+    initial_weight: Optional[float] = Field(None, gt=0)
+    notes: Optional[str] = Field(None)
+    
+    @field_validator('nome', mode='before')
+    @classmethod
+    def validate_nome(cls, v, info):
+        """Usa 'name' se 'nome' não foi fornecido."""
+        if v is None and 'name' in info.data:
+            return info.data.get('name')
+        return v
+    
+    @field_validator('idade', mode='before')
+    @classmethod
+    def validate_idade(cls, v, info):
+        """Usa 'age' se 'idade' não foi fornecido."""
+        if v is None and 'age' in info.data:
+            return info.data.get('age')
+        return v
+    
+    @field_validator('altura', mode='before')
+    @classmethod
+    def validate_altura(cls, v, info):
+        """Usa 'height' se 'altura' não foi fornecido."""
+        if v is None and 'height' in info.data:
+            return info.data.get('height')
+        return v
+    
+    @field_validator('objetivo', mode='before')
+    @classmethod
+    def validate_objetivo(cls, v, info):
+        """Usa 'objective' se 'objetivo' não foi fornecido."""
+        if v is None and 'objective' in info.data:
+            return info.data.get('objective')
+        return v
+    
+    def get_validated_data(self) -> dict:
+        """Retorna apenas os campos necessários para ClienteBase."""
+        return {
+            'nutricionista_id': self.nutricionista_id,
+            'nome': self.nome or self.name,
+            'email': self.email,
+            'phone': self.phone,
+            'idade': self.idade or self.age,
+            'altura': self.altura or self.height,
+            'gender': self.gender,
+            'initial_weight': self.initial_weight,
+            'objetivo': self.objetivo or self.objective,
+            'notes': self.notes,
+        }
 
 
 class ClienteUpdate(BaseSchema):
     """Schema para atualizar Cliente."""
 
     nome: Optional[str] = Field(None, min_length=3, max_length=255)
+    name: Optional[str] = Field(None, min_length=3, max_length=255)
+    
     idade: Optional[int] = Field(None, ge=1, le=150)
+    age: Optional[int] = Field(None, ge=1, le=150)
+    
     altura: Optional[float] = Field(None, gt=0, le=300)
+    height: Optional[float] = Field(None, gt=0, le=300)
+    
     objetivo: Optional[str] = Field(None, max_length=255)
+    objective: Optional[str] = Field(None, max_length=255)
 
 
 class ClienteResponse(TimestampSchema, ClienteBase):

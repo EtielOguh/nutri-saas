@@ -31,9 +31,14 @@ class Cliente(BaseModel):
 
     # Campos
     nome: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
     idade: Mapped[int | None] = mapped_column(Integer, nullable=True)
     altura: Mapped[float | None] = mapped_column(Float, nullable=True)  # Em centímetros
+    gender: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    initial_weight: Mapped[float | None] = mapped_column(Float, nullable=True)
     objetivo: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    notes: Mapped[str | None] = mapped_column(String, nullable=True)
 
     # Relacionamentos (usar strings para evitar circular imports)
     nutricionista: Mapped["Nutricionista"] = relationship(

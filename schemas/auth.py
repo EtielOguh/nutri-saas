@@ -27,4 +27,5 @@ class NutricionistaLoginResponse(BaseSchema):
     id: int = Field(..., description="ID do nutricionista")
     nome: str = Field(..., description="Nome do nutricionista")
     email: str = Field(..., description="Email do nutricionista")
+    crn: str | None = Field(None, description="Conselho Regional de Nutricionistas")
     token: str = Field(..., description="Token JWT")

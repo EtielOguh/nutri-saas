@@ -1,7 +1,7 @@
 """Modelo de Nutricionista."""
 from datetime import datetime
 from typing import TYPE_CHECKING, List
-from sqlalchemy import String, ForeignKey, Index, DateTime
+from sqlalchemy import String, ForeignKey, Index, DateTime, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.base import BaseModel, Base
@@ -23,6 +23,7 @@ class Nutricionista(BaseModel):
     nome: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
     senha_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    crn: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)  # CRN do nutricionista
 
     # Relacionamentos (usar strings para evitar circular imports)
     clientes: Mapped[List["Cliente"]] = relationship(
@@ -57,17 +58,19 @@ class ConfiguracaoNutricionista(Base):
 
     __tablename__ = "configuracoes_nutricionista"
 
-    # Foreign Key (Primary Key)
+    # Primary Key - ID auto-gerado
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    # Foreign Key
     nutricionista_id: Mapped[int] = mapped_column(
         ForeignKey("nutricionistas.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        primary_key=True,
+        unique=True
     )
 
     # Campos
     logo_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
-    cor_primaria: Mapped[str] = mapped_column(String(7), default="#0066CC")  # Formato hex
     valor_consulta: Mapped[float] = mapped_column(nullable=False, default=0.0)
     link_agendamento: Mapped[str | None] = mapped_column(String(512), nullable=True)
     

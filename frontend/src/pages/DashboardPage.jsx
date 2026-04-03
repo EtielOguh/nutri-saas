@@ -98,7 +98,7 @@ export const DashboardPage = () => {
                 {clients.map((client) => (
                   <div key={client.id} className="client-item">
                     <div className="client-info">
-                      <h3>{client.name}</h3>
+                      <h3>{client.nome}</h3>
                       <p className="client-meta">
                         Adicionado em {new Date(client.created_at).toLocaleDateString('pt-BR')}
                       </p>

@@ -38,14 +38,14 @@ export const ClientFormPage = ({ isEdit = false, clientId = null }) => {
       setInitialLoading(true)
       const client = await clientService.getClient(clientId)
       setFormData({
-        name: client.name || '',
+        name: client.nome || '',
         email: client.email || '',
         phone: client.phone || '',
-        age: client.age || '',
+        age: client.idade || '',
         gender: client.gender || 'outro',
         initial_weight: client.initial_weight || '',
-        height: client.height || '',
-        objective: client.objective || '',
+        height: client.altura || '',
+        objective: client.objetivo || '',
         notes: client.notes || '',
       })
     } catch (err) {
