@@ -2,10 +2,13 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
+import uuid
 
 from core.database import get_db
 from models.cliente import Cliente
+from models.token_acesso import TokenAcessoCliente
 from schemas.cliente import ClienteCreate, ClienteResponse, ClienteUpdate, ClienteDetailResponse
+from schemas.token_acesso import TokenAcessoClienteGenerateResponse
 from schemas.base import PaginatedResponse, ErrorResponse
 from services.cliente_service import ClienteService
 
@@ -247,4 +250,157 @@ async def deletar_cliente(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao deletar cliente: {str(e)}",
+        )
+
+
+@router.post(
+    "/{cliente_id}/gerar-token-acesso",
+    response_model=TokenAcessoClienteGenerateResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Gerar token de acesso público",
+    description="Gera um novo token único para acesso público do cliente (sem autenticação).",
+)
+async def gerar_token_cliente(
+    nutricionista_id: int,
+    cliente_id: int,
+    db: Session = Depends(get_db),
+) -> TokenAcessoClienteGenerateResponse:
+    """
+    Gera um novo token de acesso público para um cliente.
+    
+    O token gerado permite que o cliente acesse seus dados via endpoint público
+    sem necessidade de autenticação tradicional.
+    
+    - **nutricionista_id**: ID do nutricionista proprietário
+    - **cliente_id**: ID do cliente
+    
+    **Resposta (201):**
+    - token_unico: Token gerado (UUID v4)
+    - cliente_id: ID do cliente
+    - mensagem: Mensagem de sucesso
+    
+    **Endpoint público de acesso:**
+    ```
+    GET /public/cliente/{token_unico}
+    ```
+    
+    **Exemplo:**
+    ```bash
+    curl -X POST "http://localhost:8000/nutricionistas/1/clientes/5/gerar-token-acesso"
+    
+    Response:
+    {
+        "token_unico": "550e8400-e29b-41d4-a716-446655440000",
+        "cliente_id": 5,
+        "mensagem": "Token gerado com sucesso"
+    }
+    ```
+    """
+    try:
+        service = ClienteService(db=db)
+        
+        # Verificar que o cliente pertence ao nutricionista
+        cliente = service.get_cliente_por_nutricionista(cliente_id, nutricionista_id)
+        if not cliente:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Cliente {cliente_id} não encontrado para este nutricionista",
+            )
+        
+        # Gerar novo token (UUID v4)
+        novo_token = str(uuid.uuid4())
+        
+        # Verificar se já existe token para este cliente
+        token_existente = db.query(TokenAcessoCliente).filter(
+            TokenAcessoCliente.cliente_id == cliente_id
+        ).first()
+        
+        if token_existente:
+            # Atualizar token existente
+            token_existente.token_unico = novo_token
+            db.add(token_existente)
+        else:
+            # Criar novo registro de token
+            novo_token_obj = TokenAcessoCliente(
+                cliente_id=cliente_id,
+                token_unico=novo_token,
+            )
+            db.add(novo_token_obj)
+        
+        db.commit()
+        
+        return TokenAcessoClienteGenerateResponse(
+            token_unico=novo_token,
+            cliente_id=cliente_id,
+            mensagem="Token gerado com sucesso"
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao gerar token: {str(e)}",
+        )
+
+
+@router.get(
+    "/{cliente_id}/token-acesso",
+    response_model=TokenAcessoClienteGenerateResponse,
+    summary="Obter token de acesso público",
+    description="Retorna o token de acesso público de um cliente (se existir).",
+)
+async def obter_token_cliente(
+    nutricionista_id: int,
+    cliente_id: int,
+    db: Session = Depends(get_db),
+) -> TokenAcessoClienteGenerateResponse:
+    """
+    Obtém o token de acesso público de um cliente.
+    
+    Se o cliente não tiver um token gerado ainda, returna erro 404.
+    
+    - **nutricionista_id**: ID do nutricionista proprietário
+    - **cliente_id**: ID do cliente
+    
+    **Resposta (200):**
+    - token_unico: Token do cliente
+    - cliente_id: ID do cliente
+    - mensagem: Mensagem informativa
+    """
+    try:
+        service = ClienteService(db=db)
+        
+        # Verificar que o cliente pertence ao nutricionista
+        cliente = service.get_cliente_por_nutricionista(cliente_id, nutricionista_id)
+        if not cliente:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Cliente {cliente_id} não encontrado para este nutricionista",
+            )
+        
+        # Buscar token do cliente
+        token_obj = db.query(TokenAcessoCliente).filter(
+            TokenAcessoCliente.cliente_id == cliente_id
+        ).first()
+        
+        if not token_obj:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Cliente {cliente_id} não possui um token de acesso gerado",
+            )
+        
+        return TokenAcessoClienteGenerateResponse(
+            token_unico=token_obj.token_unico,
+            cliente_id=cliente_id,
+            mensagem="Token recuperado com sucesso"
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao obter token: {str(e)}",
         )

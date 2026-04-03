@@ -57,3 +57,28 @@ class ClienteSimpleResponse(BaseSchema):
     idade: Optional[int] = None
     altura: Optional[float] = None
     objetivo: Optional[str] = None
+
+
+class ClientePublicResponse(BaseSchema):
+    """Schema de resposta pública para Cliente (acesso via token).
+    
+    Retorna apenas dados básicos, sem informações sensíveis.
+    Usado para endpoint público /cliente/{token}
+    """
+
+    id: int = Field(..., description="ID do cliente")
+    nome: str = Field(..., description="Nome do cliente")
+    idade: Optional[int] = Field(None, description="Idade em anos")
+    altura: Optional[float] = Field(None, description="Altura em cm")
+    objetivo: Optional[str] = Field(None, description="Objetivo de saúde")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "nome": "João Silva",
+                "idade": 30,
+                "altura": 180,
+                "objetivo": "Ganhar massa muscular"
+            }
+        }

@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
 from core.database import engine, init_db, close_db
-from api.routes import health, cliente, tmb
+from api.routes import health, cliente, tmb, public
 
 # Inicialização da aplicação
 app = FastAPI(
@@ -27,6 +27,7 @@ app.add_middleware(
 
 # Inclusão de rotas
 app.include_router(health.router)
+app.include_router(public.router)
 app.include_router(tmb.router)
 app.include_router(cliente.router)
 

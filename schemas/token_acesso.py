@@ -3,7 +3,6 @@ from typing import Optional
 from pydantic import Field
 
 from schemas.base import BaseSchema, TimestampSchema
-from schemas.cliente import ClienteSimpleResponse
 
 
 class TokenAcessoClienteBase(BaseSchema):
@@ -30,7 +29,7 @@ class TokenAcessoClienteUpdate(BaseSchema):
 class TokenAcessoClienteResponse(TimestampSchema, TokenAcessoClienteBase):
     """Schema de resposta para Token de Acesso."""
 
-    cliente: Optional[ClienteSimpleResponse] = Field(None, description="Cliente do token")
+    cliente: Optional["ClienteSimpleResponse"] = Field(None, description="Cliente do token")  # noqa: F821
 
 
 class TokenAcessoClienteGenerateResponse(BaseSchema):
@@ -47,3 +46,29 @@ class TokenValidacaoResponse(BaseSchema):
     valido: bool = Field(..., description="Se o token é válido")
     cliente_id: Optional[int] = Field(None, description="ID do cliente se válido")
     cliente_nome: Optional[str] = Field(None, description="Nome do cliente se válido")
+
+
+class ClientePublicAccessResponse(BaseSchema):
+    """Schema para acesso público via token.
+    
+    Retorna dados básicos do cliente e informações do token.
+    """
+
+    id: int = Field(..., description="ID do cliente")
+    nome: str = Field(..., description="Nome do cliente")
+    idade: Optional[int] = Field(None, description="Idade em anos")
+    altura: Optional[float] = Field(None, description="Altura em cm")
+    objetivo: Optional[str] = Field(None, description="Objetivo de saúde")
+    token_criado_em: Optional[str] = Field(None, description="Data de criação do token")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "nome": "João Silva",
+                "idade": 30,
+                "altura": 180,
+                "objetivo": "Ganhar massa muscular",
+                "token_criado_em": "2026-04-02T10:30:00"
+            }
+        }

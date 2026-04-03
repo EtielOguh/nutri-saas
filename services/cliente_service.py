@@ -144,3 +144,28 @@ class ClienteService(BaseService[Cliente, ClienteCreate]):
             )
             .first()
         )
+
+    def get_cliente_por_token(self, token: str) -> Optional[Cliente]:
+        """
+        Busca um cliente através de seu token de acesso público.
+        
+        Usado para acesso público sem autenticação tradicional.
+        
+        Args:
+            token: Token único do cliente
+            
+        Returns:
+            Optional[Cliente]: Cliente se token válido, None caso contrário
+        """
+        from models.token_acesso import TokenAcessoCliente
+        
+        token_obj = (
+            self.db.query(TokenAcessoCliente)
+            .filter(TokenAcessoCliente.token_unico == token)
+            .first()
+        )
+        
+        if not token_obj:
+            return None
+        
+        return token_obj.cliente
