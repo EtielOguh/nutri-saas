@@ -1,0 +1,7 @@
+# Alembic Migration Template
+#
+# The generic template has been copied to this directory.
+# Revision history will be stored in the versions/ subdirectory.
+#
+# See the documentation on creating a new migration:
+# https://alembic.sqlalchemy.org/en/latest/tutorial.html#create-a-migration-script
