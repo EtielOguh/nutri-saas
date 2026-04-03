@@ -1,9 +1,10 @@
 """Modelo de Nutricionista."""
+from datetime import datetime
 from typing import TYPE_CHECKING, List
-from sqlalchemy import String, ForeignKey, Index
+from sqlalchemy import String, ForeignKey, Index, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.base import BaseModel
+from models.base import BaseModel, Base
 
 if TYPE_CHECKING:
     from models.cliente import Cliente  # noqa: F401
@@ -47,7 +48,7 @@ class Nutricionista(BaseModel):
         return f"<Nutricionista(id={self.id}, nome='{self.nome}', email='{self.email}')>"
 
 
-class ConfiguracaoNutricionista(BaseModel):
+class ConfiguracaoNutricionista(Base):
     """
     Configurações personalizadas do nutricionista.
     
@@ -56,7 +57,7 @@ class ConfiguracaoNutricionista(BaseModel):
 
     __tablename__ = "configuracoes_nutricionista"
 
-    # Foreign Key
+    # Foreign Key (Primary Key)
     nutricionista_id: Mapped[int] = mapped_column(
         ForeignKey("nutricionistas.id", ondelete="CASCADE"),
         nullable=False,
@@ -69,6 +70,12 @@ class ConfiguracaoNutricionista(BaseModel):
     cor_primaria: Mapped[str] = mapped_column(String(7), default="#0066CC")  # Formato hex
     valor_consulta: Mapped[float] = mapped_column(nullable=False, default=0.0)
     link_agendamento: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    
+    # Timestamps (adicionados manualmente)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # Relacionamento
     nutricionista: Mapped["Nutricionista"] = relationship(

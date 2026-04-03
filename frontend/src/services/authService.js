@@ -9,13 +9,18 @@ export const authService = {
    */
   login: async (email, senha) => {
     const response = await api.post('/auth/login', {
-      username: email,
-      password: senha
+      email: email,
+      senha: senha
     })
     
-    if (response.data.access_token) {
-      localStorage.setItem('token', response.data.access_token)
-      localStorage.setItem('nutricionista', JSON.stringify(response.data.nutricionista))
+    if (response.data.token) {
+      localStorage.setItem('token', response.data.token)
+      localStorage.setItem('nutricionista', JSON.stringify({
+        id: response.data.id,
+        nome: response.data.nome,
+        email: response.data.email,
+        name: response.data.nome // Compatibilidade
+      }))
     }
     
     return response.data

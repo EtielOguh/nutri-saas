@@ -7,6 +7,7 @@ import {
   DashboardPage,
   ClientsPage,
   ClientDetailPage,
+  ClientFormPage,
   SettingsPage
 } from './pages'
 import './App.css'
@@ -42,6 +43,15 @@ function App() {
           />
 
           <Route
+            path="/clientes/novo"
+            element={
+              <PrivateRoute>
+                <ClientFormPage isEdit={false} />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
             path="/clientes/:clientId"
             element={
               <PrivateRoute>
@@ -54,16 +64,7 @@ function App() {
             path="/clientes/:clientId/editar"
             element={
               <PrivateRoute>
-                <ClientDetailPage />
-              </PrivateRoute>
-            }
-          />
-
-          <Route
-            path="/clientes/novo"
-            element={
-              <PrivateRoute>
-                <ClientsPage />
+                <ClientFormPage isEdit={true} />
               </PrivateRoute>
             }
           />
